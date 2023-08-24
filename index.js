@@ -6,49 +6,40 @@ app.use(express.json()); // Middleware para parsear JSON en las solicitudes
 
 // import { create, Whatsapp } from 'venom-bot';
 const venom = require('venom-bot');
-var client = null;
+let client = null;
+let isSessionOpen = false;
+
 venom
   .create({
-    session: 'session-name'
+    session: 'session-name',
+    // catchQR: (base64Qr, asciiQR) => {
+    //   // Cuando se necesita el escaneo del código QR, puedes enviarlo al cliente
+    //   // base64Qr contiene el código QR en formato base64
+    //   // asciiQR contiene el código QR en formato ASCII
+    //   console.log('Escanea este código QR:', asciiQR);
+    // },
+    statusFind: (statusGet, session, info) => {
+      console.log("Cambio en la sesión")
+      console.log(statusGet)
+    }
   })
   .then((cl) => {
     client = cl;
+    isSessionOpen = true;
+
+    cl.onStateChange((state) => {
+      console.log('Cambió el estado de la sesión:');
+      console.log(state);
+      if (state === 'CONFLICT' || state === 'UNPAIRED' || state === 'UNLAUNCHED') {
+        isSessionOpen = false;
+        console.log('Sesión cerrada.');
+      }
+    });
   });
 
-// function start(client) {
-//     setInterval(() => {
-//         const destinationNumber = '51920648575@c.us';
-//         const message = '¡Este es un mensaje enviado automáticamente cada 10 segundos!';
-        
-//         client.sendText(destinationNumber, message)
-//           .then((result) => {
-//             console.log('Mensaje enviado: ', result);
-//           })
-//           .catch((error) => {
-//             console.error('Error al enviar mensaje: ', error);
-//           });
-//       }, 10000);
-
-//   client.onMessage((message) => {
-//     console.log(message);
-//     if (message.body === 'Hi' && message.isGroupMsg === false) {
-//         const destinationNumber = '51920648575' + '@c.us';
-//       client.sendText(message.from, 'Welcome Venom 🕷');
-//         // .then((result) => {
-//         //   console.log('Result: ', result); //return object success
-//         // })
-//         // .catch((erro) => {
-//         //   console.error('Error when sending: ', erro); //return object error
-//         // });
-//       client.sendText(destinationNumber, 'Mensaje enviado al número 51920648575');
-//     }
-//   });
-// }
-
-
 app.post('/send-message', (req, res) => {
-  if(!client) {
-    res.status(500).send('Aún no se ha realizado la conexión a whatsapp.');
+  if(!isSessionOpen) {
+    res.status(500).send('La sesión está cerrada. Escanea un nuevo código QR.');
   } else {
     const destinationNumber = req.body.number;
     const message = req.body.message;
