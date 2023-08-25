@@ -46,7 +46,8 @@ app.post('/send-message', (req, res) => {
 });
 
 app.post('/create-qr', (req, res) => {
-  client.close()
+  if(client){
+    client.close()
     .then(() => {
       isSessionOpen = false;
 
@@ -67,6 +68,21 @@ app.post('/create-qr', (req, res) => {
     .catch((error) => {
       console.error('Error al cerrar la sesión:', error);
     });
+  } else {
+    venom
+      .create({
+        session: 'session-name',
+        catchQR: (base64Qr, asciiQR) => {
+          // console.log('Escanea este código QR:');
+          // console.log(asciiQR);
+          res.status(200).send(asciiQR);
+        },
+      })
+      .then(async (cl) => {
+        client = cl;
+        isSessionOpen = true;
+      });
+  }
 
 });
 
