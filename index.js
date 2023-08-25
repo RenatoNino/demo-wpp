@@ -11,16 +11,6 @@ let isSessionOpen = false;
 venom
   .create({
     session: 'session-name',
-    // catchQR: (base64Qr, asciiQR) => {
-    //   // Cuando se necesita el escaneo del código QR, puedes enviarlo al cliente
-    //   // base64Qr contiene el código QR en formato base64
-    //   // asciiQR contiene el código QR en formato ASCII
-    //   console.log('Escanea este código QR:', asciiQR);
-    // },
-    // statusFind: (statusGet, session, info) => {
-    //   console.log("Cambio en la sesión")
-    //   console.log(statusGet)
-    // }
   })
   .then(async (cl) => {
     client = cl;
@@ -36,7 +26,6 @@ app.post('/send-message', (req, res) => {
 
     client.sendText(destinationNumber + '@c.us', message)
       .then((result) => {
-        // console.log('Mensaje enviado: ', result);
         res.status(200).send('Mensaje enviado con éxito');
       })
       .catch((error) => {
@@ -65,17 +54,10 @@ app.post('/create-qr', (req, res) => {
       .create({
         session: 'session-name',
         catchQR: (base64Qr, asciiQR) => {
-          // Cuando se necesita el escaneo del código QR, puedes enviarlo al cliente
-          // base64Qr contiene el código QR en formato base64
-          // asciiQR contiene el código QR en formato ASCII
           console.log('Escanea este código QR:');
           console.log(asciiQR);
           res.status(200).send(asciiQR);
         },
-        // statusFind: (statusGet, session, info) => {
-        //   console.log("Cambio en la sesión")
-        //   console.log(statusGet)
-        // }
       })
       .then(async (cl) => {
         client = cl;
