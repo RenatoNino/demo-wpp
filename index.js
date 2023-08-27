@@ -17,33 +17,31 @@ venom
     isSessionOpen = true;
   });
 
-app.post('/send-message', (req, res) => {
-  if(!isSessionOpen) {
-    res.status(500).send('La sesión está cerrada. Escanea un nuevo código QR.');
-  } else {
-    const destinationNumber = req.body.number;
-    const message = req.body.message;
-
-    client.sendText(destinationNumber + '@c.us', message)
-      .then((result) => {
-        res.status(200).send('Mensaje enviado con éxito');
-      })
-      .catch((error) => {
-        /* 
-          Añadir catch en la siguiente función: /node_modules/venom-bot/dist/api/layers/sender.layer.js::327
-          const result = await this.page.evaluate(({ to, content, passId, checkNumber, forcingReturn, delSend }) => {
-                return WAPI.sendMessage(to, content, undefined, passId, checkNumber, forcingReturn, delSend);
-            }, { to, content, passId, checkNumber, forcingReturn, delSend }).catch((error) => {
-                reject(error);
-            });
-        */
-
-        // console.log('Error al enviar mensaje: ');
-        // console.log(error);
-        res.status(500).send('Error al enviar mensaje. Posible causa: Desconexión de Whastapp.');
-      });
-  }
-});
+app.post('/send-message', async (req, res) => {
+    if (!isSessionOpen) {
+      res.status(500).send('La sesión está cerrada. Escanea un nuevo código QR.');
+    } else {
+      const messages = req.body.messages;
+      
+      try {
+        for (let i = 0; i < messages.length; i++) {
+          const destinationNumber = messages[i].number;
+          const message = messages[i].message;
+  
+          try {
+            await client.sendText(destinationNumber + '@c.us', message);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } catch (error) {
+            res.status(500).send('Error al enviar mensaje. Posible causa: Desconexión de Whastapp.');
+          }
+        }
+        res.status(200).send('Mensajes enviados con éxito.');
+      } catch (error) {
+        res.status(500).send('Error al enviar mensajes. Posible causa: Desconexión de WhatsApp.');
+      }
+    }
+  });
+  
 
 app.post('/create-qr', (req, res) => {
   if(client){
