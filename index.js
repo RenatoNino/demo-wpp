@@ -18,26 +18,51 @@ venom
   });
 
 app.post('/send-message', async (req, res) => {
-    if (!isSessionOpen) {
-      res.status(500).send('La sesión está cerrada. Escanea un nuevo código QR.');
-    } else {
-      const messages = req.body.messages;
-      for (let i = 0; i < messages.length; i++) {
-        const destinationNumber = messages[i].number;
-        const message = messages[i].message;
+  if (!isSessionOpen) {
+    res.status(500).send('La sesión está cerrada. Escanea un nuevo código QR.');
+  } else {
+    const messages = req.body.messages;
 
-        try {
-          await client.sendText(destinationNumber + '@c.us', message);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } catch (error) {
-          res.status(500).send('Error al enviar mensaje. Posible causa: Desconexión de Whastapp.');
-          isSessionOpen = false;
-          break;
-        }
+    const errors = [];
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      if (typeof message !== 'object' || !message.number || !message.message) {
+        errors.push(i);
+        continue;
       }
 
-      res.status(200).send('Mensajes enviados con éxito.');
+      const destinationNumber = message.number;
+      const messageText = message.message;
+
+      if (!/^\d+$/.test(destinationNumber)) {
+        errors.push(i);
+        continue;
+      }
+
+      if (typeof messageText !== 'string' || messageText.length == 0 || messageText.length > 700) {
+        errors.push(i);
+        continue;
+      }
     }
+    if (errors.length > 0) res.status(400).json({ errors: errors });
+
+
+    for (let i = 0; i < messages.length; i++) {
+      const destinationNumber = messages[i].number;
+      const messageText = messages[i].message;
+
+      try {
+        await client.sendText(destinationNumber + '@c.us', messageText);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        res.status(400).send('Error al enviar mensaje. Posible causa: Desconexión de Whastapp.');
+        isSessionOpen = false;
+        return ;
+      }
+    }
+
+    res.status(200).send('Mensajes enviados con éxito.');
+  }
 });
   
 
