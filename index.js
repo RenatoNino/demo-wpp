@@ -22,23 +22,20 @@ app.post('/send-message', async (req, res) => {
       res.status(500).send('La sesión está cerrada. Escanea un nuevo código QR.');
     } else {
       const messages = req.body.messages;
-      
-      try {
-        for (let i = 0; i < messages.length; i++) {
-          const destinationNumber = messages[i].number;
-          const message = messages[i].message;
-  
-          try {
-            await client.sendText(destinationNumber + '@c.us', message);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          } catch (error) {
-            res.status(500).send('Error al enviar mensaje. Posible causa: Desconexión de Whastapp.');
-          }
+      for (let i = 0; i < messages.length; i++) {
+        const destinationNumber = messages[i].number;
+        const message = messages[i].message;
+
+        try {
+          await client.sendText(destinationNumber + '@c.us', message);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          res.status(500).send('Error al enviar mensaje. Posible causa: Desconexión de Whastapp.');
+          break;
         }
-        res.status(200).send('Mensajes enviados con éxito.');
-      } catch (error) {
-        res.status(500).send('Error al enviar mensajes. Posible causa: Desconexión de WhatsApp.');
       }
+
+      res.status(200).send('Mensajes enviados con éxito.');
     }
   });
   
