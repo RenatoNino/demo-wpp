@@ -31,53 +31,33 @@ app.post('/send-message', async (req, res) => {
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
           res.status(500).send('Error al enviar mensaje. Posible causa: Desconexión de Whastapp.');
+          isSessionOpen = false;
           break;
         }
       }
 
       res.status(200).send('Mensajes enviados con éxito.');
     }
-  });
+});
   
 
-app.post('/create-qr', (req, res) => {
-  if(client){
-    client.close()
-    .then(() => {
-      isSessionOpen = false;
-
-      venom
-      .create({
-        session: 'session-name',
-        catchQR: (base64Qr, asciiQR) => {
-          console.log('Escanea este código QR:');
-          console.log(asciiQR);
-          res.status(200).send(asciiQR);
-        },
-      })
-      .then(async (cl) => {
-        client = cl;
-        isSessionOpen = true;
-      });
-    })
-    .catch((error) => {
-      console.error('Error al cerrar la sesión:', error);
-    });
-  } else {
-    venom
-      .create({
-        session: 'session-name',
-        catchQR: (base64Qr, asciiQR) => {
-          // console.log('Escanea este código QR:');
-          // console.log(asciiQR);
-          res.status(200).send(asciiQR);
-        },
-      })
-      .then(async (cl) => {
-        client = cl;
-        isSessionOpen = true;
-      });
-  }
+app.post('/create-qr', async (req, res) => {
+  if(client) await client.close();
+  
+  isSessionOpen = false;
+  venom
+  .create({
+    session: 'session-name',
+    catchQR: (base64Qr, asciiQR) => {
+      // console.log('Escanea este código QR:');
+      // console.log(asciiQR);
+      res.status(200).send(asciiQR);
+    },
+  })
+  .then(async (cl) => {
+    client = cl;
+    isSessionOpen = true;
+  });
 
 });
 
