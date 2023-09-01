@@ -76,7 +76,7 @@ app.post('/create-qr', async (req, res) => {
     catchQR: (base64Qr, asciiQR) => {
       // console.log('Escanea este código QR:');
       // console.log(asciiQR);
-      res.status(200).send(asciiQR);
+      res.status(200).send(base64Qr);
     },
   })
   .then(async (cl) => {
